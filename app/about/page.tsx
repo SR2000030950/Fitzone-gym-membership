@@ -28,7 +28,7 @@ export default function AboutPage() {
       <section className="card">
         <h2 className="text-2xl font-bold mb-4">Our Story</h2>
         <p className="text-gray-600 mb-4">
-          FitZone was founded in 2023 by a team of fitness enthusiasts and technology experts who recognized the
+          FitZone was founded in 2025 by a team of fitness enthusiasts and technology experts who recognized the
           challenges faced by gym owners in managing their facilities efficiently. After working closely with several
           gym owners, we developed a solution that addresses the unique needs of fitness businesses.
         </p>

@@ -60,6 +60,7 @@
     "zod": "^3.24.1",
     "mongoose": "latest",
     "bcryptjs": "latest"
+    
   },
   "devDependencies": {
     "@types/node": "^22",
@@ -70,3 +71,5 @@
     "typescript": "^5"
   }
 }
+
+

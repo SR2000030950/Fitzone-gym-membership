@@ -7,70 +7,94 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
 
+interface Plan {
+  plan_id: number
+  plan_name: string
+  description?: string
+  cost: number
+  duration_days: number
+}
+
 interface Member {
-  _id: string
-  firstName: string
-  lastName: string
+  member_id: number
+  plan_id: number
+  first_name: string
+  last_name: string
   email: string
-  phone: string
-  membershipType: string
-  status: string
-  startDate: string
-  endDate?: string
+  phone: number
+  dob?: string
+  gender?: string
+  address?: string
+  join_date: string
+  emergency_contact_no: number
+  emergency_contact: string
 }
 
 export default function EditMemberPage() {
   const params = useParams()
   const router = useRouter()
-  const [formData, setFormData] = useState<Member>({
-    _id: "",
-    firstName: "",
-    lastName: "",
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [formData, setFormData] = useState<any>({
+    member_id: "",
+    plan_id: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
-    membershipType: "",
-    status: "",
-    startDate: "",
+    dob: "",
+    gender: "",
+    address: "",
+    join_date: "",
+    emergency_contact_no: "",
+    emergency_contact: "",
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const fetchMember = async () => {
+    const fetchData = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // For demo purposes, we'll use mock data
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // Fetch plans
+        const plansResponse = await fetch("/api/plans")
+        const plansData = await plansResponse.json()
 
-        // Mock member data
-        const mockMember = {
-          _id: params.id as string,
-          firstName: "John",
-          lastName: "Doe",
-          email: "john.doe@example.com",
-          phone: "(555) 123-4567",
-          membershipType: "Premium",
-          status: "Active",
-          startDate: "2023-01-15",
-          endDate: "2024-01-15",
+        if (plansData.success) {
+          setPlans(plansData.data)
         }
 
-        setFormData(mockMember)
+        // Fetch member
+        const memberResponse = await fetch(`/api/members/${params.id}`)
+        const memberData = await memberResponse.json()
+
+        if (memberData.success) {
+          const member = memberData.data
+
+          // Format date fields for the form
+          const formattedMember = {
+            ...member,
+            dob: member.dob ? new Date(member.dob).toISOString().split("T")[0] : "",
+            join_date: new Date(member.join_date).toISOString().split("T")[0],
+          }
+
+          setFormData(formattedMember)
+        } else {
+          setError("Failed to load member details")
+        }
       } catch (error) {
-        setError("Failed to load member details")
-        console.error("Error fetching member:", error)
+        setError("Failed to load data")
+        console.error("Error fetching data:", error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchMember()
+    fetchData()
   }, [params.id])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
     }))
@@ -82,13 +106,32 @@ export default function EditMemberPage() {
     setError("")
 
     try {
-      // In a real app, you would call your API to update the member
-      // For demo purposes, we'll just simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Prepare the data for submission
+      const submitData = {
+        ...formData,
+        plan_id: Number(formData.plan_id),
+        phone: Number(formData.phone),
+        emergency_contact_no: Number(formData.emergency_contact_no),
+      }
 
-      router.push(`/members/${params.id}`)
+      const response = await fetch(`/api/members/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submitData),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        router.push(`/members/${params.id}`)
+      } else {
+        setError(data.message || "Failed to update member")
+      }
     } catch (error) {
       setError("Failed to update member. Please try again.")
+      console.error("Error updating member:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -118,14 +161,52 @@ export default function EditMemberPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="firstName" className="form-label">
+              <label htmlFor="member_id" className="form-label">
+                Member ID
+              </label>
+              <input
+                type="number"
+                id="member_id"
+                name="member_id"
+                value={formData.member_id}
+                onChange={handleChange}
+                className="form-input"
+                disabled
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Member ID cannot be changed</p>
+            </div>
+
+            <div>
+              <label htmlFor="plan_id" className="form-label">
+                Membership Plan
+              </label>
+              <select
+                id="plan_id"
+                name="plan_id"
+                value={formData.plan_id}
+                onChange={handleChange}
+                className="form-input"
+                required
+              >
+                <option value="">Select a plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.plan_id} value={plan.plan_id}>
+                    {plan.plan_name} - ${plan.cost} ({plan.duration_days} days)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="first_name" className="form-label">
                 First Name
               </label>
               <input
                 type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
+                id="first_name"
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleChange}
                 className="form-input"
                 required
@@ -133,14 +214,14 @@ export default function EditMemberPage() {
             </div>
 
             <div>
-              <label htmlFor="lastName" className="form-label">
+              <label htmlFor="last_name" className="form-label">
                 Last Name
               </label>
               <input
                 type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
+                id="last_name"
+                name="last_name"
+                value={formData.last_name}
                 onChange={handleChange}
                 className="form-input"
                 required
@@ -178,50 +259,54 @@ export default function EditMemberPage() {
             </div>
 
             <div>
-              <label htmlFor="membershipType" className="form-label">
-                Membership Type
-              </label>
-              <select
-                id="membershipType"
-                name="membershipType"
-                value={formData.membershipType}
-                onChange={handleChange}
-                className="form-input"
-                required
-              >
-                <option value="Basic">Basic</option>
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="status" className="form-label">
-                Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="form-input"
-                required
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Pending">Pending</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="startDate" className="form-label">
-                Start Date
+              <label htmlFor="dob" className="form-label">
+                Date of Birth
               </label>
               <input
                 type="date"
-                id="startDate"
-                name="startDate"
-                value={formData.startDate.split("T")[0]}
+                id="dob"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="gender" className="form-label">
+                Gender
+              </label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleChange} className="form-input">
+                <option value="">Select gender</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label htmlFor="address" className="form-label">
+                Address
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className="form-input"
+                rows={2}
+              ></textarea>
+            </div>
+
+            <div>
+              <label htmlFor="join_date" className="form-label">
+                Join Date
+              </label>
+              <input
+                type="date"
+                id="join_date"
+                name="join_date"
+                value={formData.join_date}
                 onChange={handleChange}
                 className="form-input"
                 required
@@ -229,16 +314,32 @@ export default function EditMemberPage() {
             </div>
 
             <div>
-              <label htmlFor="endDate" className="form-label">
-                End Date
+              <label htmlFor="emergency_contact" className="form-label">
+                Emergency Contact Name
               </label>
               <input
-                type="date"
-                id="endDate"
-                name="endDate"
-                value={formData.endDate?.split("T")[0] || ""}
+                type="text"
+                id="emergency_contact"
+                name="emergency_contact"
+                value={formData.emergency_contact}
                 onChange={handleChange}
                 className="form-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="emergency_contact_no" className="form-label">
+                Emergency Contact Number
+              </label>
+              <input
+                type="tel"
+                id="emergency_contact_no"
+                name="emergency_contact_no"
+                value={formData.emergency_contact_no}
+                onChange={handleChange}
+                className="form-input"
+                required
               />
             </div>
           </div>

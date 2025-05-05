@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Dumbbell, Database } from "lucide-react"
+import { Dumbbell, Database, BarChart2 } from "lucide-react"
 import { useState } from "react"
 
 export default function Navbar() {
@@ -31,6 +31,12 @@ export default function Navbar() {
             </Link>
             <Link href="/members" className={`px-3 py-2 ${isActive("/members")}`}>
               Members
+            </Link>
+            <Link href="/dashboard" className={`px-3 py-2 ${isActive("/dashboard")}`}>
+              <div className="flex items-center gap-1">
+                <BarChart2 className="h-4 w-4" />
+                <span>Dashboard</span>
+              </div>
             </Link>
             <Link href="/data-loader" className={`px-3 py-2 ${isActive("/data-loader")}`}>
               <div className="flex items-center gap-1">
@@ -80,6 +86,16 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Members
+            </Link>
+            <Link
+              href="/dashboard"
+              className={`block px-3 py-2 rounded-md ${isActive("/dashboard")}`}
+              onClick={() => setIsOpen(false)}
+            >
+              <div className="flex items-center gap-1">
+                <BarChart2 className="h-4 w-4" />
+                <span>Dashboard</span>
+              </div>
             </Link>
             <Link
               href="/data-loader"

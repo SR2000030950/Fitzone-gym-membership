@@ -26,7 +26,6 @@ const MemberSchema = new mongoose.Schema({
     required: true,
     maxlength: 30,
     unique: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please provide a valid email"],
   },
   phone: {
     type: Number,

@@ -4,8 +4,12 @@ import Member from "@/models/Member"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    console.log("API: Fetching member with ID:", params.id)
+
     await connectToDatabase()
     const member = await Member.findOne({ member_id: Number.parseInt(params.id) })
+
+    console.log("API: Found member:", member)
 
     if (!member) {
       return NextResponse.json({ success: false, message: "Member not found" }, { status: 404 })

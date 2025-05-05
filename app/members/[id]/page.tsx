@@ -6,45 +6,64 @@ import Link from "next/link"
 import { ArrowLeft, Edit, Trash2, User } from "lucide-react"
 
 interface Member {
-  _id: string
-  firstName: string
-  lastName: string
+  member_id: number
+  plan_id: number
+  first_name: string
+  last_name: string
   email: string
-  phone: string
-  membershipType: string
-  status: string
-  startDate: string
-  endDate?: string
+  phone: number
+  dob?: string
+  gender?: string
+  address?: string
+  join_date: string
+  emergency_contact_no: number
+  emergency_contact: string
+}
+
+interface Plan {
+  plan_id: number
+  plan_name: string
+  description?: string
+  cost: number
+  duration_days: number
 }
 
 export default function MemberDetailsPage() {
   const params = useParams()
   const router = useRouter()
   const [member, setMember] = useState<Member | null>(null)
+  const [plan, setPlan] = useState<Plan | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchMember = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // For demo purposes, we'll use mock data
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        console.log("Fetching member with ID:", params.id)
 
-        // Mock member data
-        const mockMember = {
-          _id: params.id as string,
-          firstName: "John",
-          lastName: "Doe",
-          email: "john.doe@example.com",
-          phone: "(555) 123-4567",
-          membershipType: "Premium",
-          status: "Active",
-          startDate: "2023-01-15",
-          endDate: "2024-01-15",
+        // Fetch the member data from the API
+        const response = await fetch(`/api/members/${params.id}`)
+        const data = await response.json()
+
+        console.log("API response:", data)
+
+        if (data.success) {
+          setMember(data.data)
+
+          // Fetch the plan data for this member
+          if (data.data.plan_id) {
+            const planResponse = await fetch(`/api/plans/${data.data.plan_id}`)
+            const planData = await planResponse.json()
+
+            console.log("Plan API response:", planData)
+
+            if (planData.success) {
+              setPlan(planData.data)
+            }
+          }
+        } else {
+          setError("Failed to load member details")
         }
-
-        setMember(mockMember)
       } catch (error) {
         setError("Failed to load member details")
         console.error("Error fetching member:", error)
@@ -53,16 +72,24 @@ export default function MemberDetailsPage() {
       }
     }
 
-    fetchMember()
+    if (params.id) {
+      fetchMember()
+    }
   }, [params.id])
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this member?")) {
       try {
-        // In a real app, you would call your API to delete the member
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        const response = await fetch(`/api/members/${params.id}`, {
+          method: "DELETE",
+        })
+        const data = await response.json()
 
-        router.push("/members")
+        if (data.success) {
+          router.push("/members")
+        } else {
+          setError("Failed to delete member")
+        }
       } catch (error) {
         setError("Failed to delete member")
         console.error("Error deleting member:", error)
@@ -112,7 +139,7 @@ export default function MemberDetailsPage() {
         </div>
 
         <div className="flex gap-2">
-          <Link href={`/members/${member._id}/edit`} className="btn-secondary flex items-center gap-2">
+          <Link href={`/members/${member.member_id}/edit`} className="btn-secondary flex items-center gap-2">
             <Edit className="h-4 w-4" />
             Edit
           </Link>
@@ -132,14 +159,14 @@ export default function MemberDetailsPage() {
             <span
               className={`px-3 py-1 text-sm font-semibold rounded-full 
               ${
-                member.status === "Active"
-                  ? "bg-green-100 text-green-800"
-                  : member.status === "Inactive"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-yellow-100 text-yellow-800"
+                member.gender === "M"
+                  ? "bg-blue-100 text-blue-800"
+                  : member.gender === "F"
+                    ? "bg-pink-100 text-pink-800"
+                    : "bg-purple-100 text-purple-800"
               }`}
             >
-              {member.status}
+              {member.gender === "M" ? "Male" : member.gender === "F" ? "Female" : "Other"}
             </span>
           </div>
 
@@ -150,7 +177,7 @@ export default function MemberDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-500">Full Name</p>
                   <p className="font-medium">
-                    {member.firstName} {member.lastName}
+                    {member.first_name} {member.last_name}
                   </p>
                 </div>
                 <div>
@@ -161,6 +188,18 @@ export default function MemberDetailsPage() {
                   <p className="text-sm text-gray-500">Phone</p>
                   <p className="font-medium">{member.phone}</p>
                 </div>
+                {member.dob && (
+                  <div>
+                    <p className="text-sm text-gray-500">Date of Birth</p>
+                    <p className="font-medium">{new Date(member.dob).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {member.address && (
+                  <div>
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="font-medium">{member.address}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -168,19 +207,25 @@ export default function MemberDetailsPage() {
               <h2 className="text-lg font-semibold mb-4">Membership Details</h2>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-500">Membership Type</p>
-                  <p className="font-medium">{member.membershipType}</p>
+                  <p className="text-sm text-gray-500">Membership Plan</p>
+                  <p className="font-medium">{plan ? plan.plan_name : `Plan ID: ${member.plan_id}`}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Start Date</p>
-                  <p className="font-medium">{new Date(member.startDate).toLocaleDateString()}</p>
-                </div>
-                {member.endDate && (
+                {plan && (
                   <div>
-                    <p className="text-sm text-gray-500">End Date</p>
-                    <p className="font-medium">{new Date(member.endDate).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500">Plan Cost</p>
+                    <p className="font-medium">${plan.cost.toFixed(2)}</p>
                   </div>
                 )}
+                {plan && (
+                  <div>
+                    <p className="text-sm text-gray-500">Plan Duration</p>
+                    <p className="font-medium">{plan.duration_days} days</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-500">Join Date</p>
+                  <p className="font-medium">{new Date(member.join_date).toLocaleDateString()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -188,59 +233,16 @@ export default function MemberDetailsPage() {
       </div>
 
       <div className="card">
-        <h2 className="text-lg font-semibold mb-4">Membership History</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Details
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(member.startDate).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Membership Started
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {member.membershipType} membership activated
-                </td>
-              </tr>
-              {/* You would typically fetch this data from your API */}
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date("2023-02-15").toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                    Payment Received
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly payment processed</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date("2023-03-10").toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Information Updated
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Contact information updated</td>
-              </tr>
-            </tbody>
-          </table>
+        <h2 className="text-lg font-semibold mb-4">Emergency Contact</h2>
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm text-gray-500">Name</p>
+            <p className="font-medium">{member.emergency_contact}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Phone</p>
+            <p className="font-medium">{member.emergency_contact_no}</p>
+          </div>
         </div>
       </div>
     </div>

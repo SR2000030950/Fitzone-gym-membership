@@ -13,6 +13,7 @@ export default function DataLoaderPage() {
     try {
       setIsLoading(true)
       setError("")
+      setResult(null)
 
       const response = await fetch("/api/load-data", {
         method: "POST",
@@ -65,8 +66,7 @@ export default function DataLoaderPage() {
       <div className="card">
         <h2 className="text-xl font-semibold mb-4">Load Sample Data</h2>
         <p className="mb-4 text-gray-600">
-          This tool will load the sample data from the FitZone database schema into your MongoDB database. This includes
-          plans, members, workouts, attendance, sessions, and payments.
+          
         </p>
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
           <div className="flex">

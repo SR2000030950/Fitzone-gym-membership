@@ -159,8 +159,9 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-bold">Email</h3>
-                <p className="text-gray-600">support@fitzone.com</p>
-                <p className="text-gray-600">info@fitzone.com</p>
+                <p className="text-gray-600">srtirum@iu.edu</p>
+                <p className="text-gray-600">mjayasan@iu.edu</p>
+                <p className="text-gray-600">gs41@iu.edu</p>
               </div>
             </div>
 
@@ -184,7 +185,7 @@ export default function ContactPage() {
                 <p className="text-gray-600">
                   123 Fitness Street
                   <br />
-                  San Francisco, CA 94103
+                  Bloomington, IN 47401
                   <br />
                   United States
                 </p>
